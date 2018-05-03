@@ -1,10 +1,17 @@
 #%% Импортируем библиотеки
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-#%%
+#%% Объявляем x и y
+
+x_train = [x for x in range(11)]
+y_train = [2 * x + 1 for x in x_train]
+
+x_train = np.array(x_train, dtype=np.float32).reshape(-1, 1)
+y_train = np.array(y_train, dtype=np.float32).reshape(-1, 1)
 
 
 
@@ -37,7 +44,7 @@ model = LinearRegressionModel(input_dim, output_dim)
 
 #%% Instantiate loss class ( объявляем функцию потерь)
 
-learning_rate = 0.01
+learning_rate = 0.001
 
 criterion = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
@@ -64,4 +71,45 @@ epochs = 100
 for epoch in range(epochs):
     epoch += 1
 
+    # convert numpy variables to tensors
+    inputs = torch.from_numpy(x_train)
+    labels = torch.from_numpy(y_train)
 
+
+    # clear gradients w.r.t. parameters
+    optimizer.zero_grad()
+
+    # forward to get outputs
+    outputs = model(inputs)
+
+    # calculate loss
+    loss = criterion(outputs, labels)
+
+    # getting gradients w.r.t. parameters
+    loss.backward()
+
+    # updating parameters
+    optimizer.step()
+
+    print('epoch: {}, loss: {}'.format(epoch, loss.data[0]))
+
+
+#%% Check
+
+y_pred = model(torch.from_numpy(x_train)).data.numpy()
+
+#%% Save model
+
+save_model = True
+
+if save_model is True:
+    # Saves only parameters
+    # a and b
+    torch.save(model.state_dict(), 'lrm.pkl')
+
+#%% Load model
+
+load_model = True
+
+if load_model is True:
+    model.load_state_dict(torch.load('lrm.pkl'))
